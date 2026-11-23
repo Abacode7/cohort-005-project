@@ -72,6 +72,8 @@ async function seed() {
 
   // Drop and recreate tables for a clean seed
   sqlite.exec(`
+    DROP TABLE IF EXISTS bookmarks;
+    DROP TABLE IF EXISTS notes;
     DROP TABLE IF EXISTS comments;
     DROP TABLE IF EXISTS course_ratings;
     DROP TABLE IF EXISTS video_watch_events;
@@ -1999,6 +2001,50 @@ This course is still in draft while the cluster examples are rewritten against t
 
   console.log(
     `Created ${countRows(schema.comments)} lesson comments across ${countRows(schema.comments, isNull(schema.comments.parentId))} threads.`
+  );
+
+  // ─── Bookmarks and Notes ───
+  // Only enrolled Students save Lessons. Emma (students[0]) has several of
+  // each so /saved has something to order; students[2] has one of each so
+  // the lists are visibly scoped to the signed-in Student.
+
+  db.insert(schema.bookmarks)
+    .values([
+      { userId: students[0].id, lessonId: course1LessonIds[2], createdAt: daysAgo(20) },
+      { userId: students[0].id, lessonId: course1LessonIds[7], createdAt: daysAgo(6) },
+      { userId: students[0].id, lessonId: course2LessonIds[1], createdAt: daysAgo(2) },
+      { userId: students[2].id, lessonId: course1LessonIds[4], createdAt: daysAgo(9) },
+    ])
+    .run();
+
+  db.insert(schema.notes)
+    .values([
+      {
+        userId: students[0].id,
+        lessonId: course1LessonIds[2],
+        body: "Use `npx tsc` — the global install isn't on my PATH.\n\n# not a heading, just a reminder",
+        createdAt: daysAgo(30),
+        updatedAt: daysAgo(4),
+      },
+      {
+        userId: students[0].id,
+        lessonId: course2LessonIds[1],
+        body: "418 is in the table now. Re-read before the quiz.",
+        createdAt: daysAgo(3),
+        updatedAt: daysAgo(3),
+      },
+      {
+        userId: students[2].id,
+        lessonId: course1LessonIds[4],
+        body: "Come back to *generics* — didn't click the first time.",
+        createdAt: daysAgo(9),
+        updatedAt: daysAgo(9),
+      },
+    ])
+    .run();
+
+  console.log(
+    `Created ${countRows(schema.bookmarks)} bookmarks and ${countRows(schema.notes)} notes.`
   );
 
   // ─── Lesson Progress ───
